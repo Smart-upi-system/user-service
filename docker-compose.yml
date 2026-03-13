@@ -1,0 +1,19 @@
+services:
+  postgres-user:
+    image: postgres:15-alpine
+    container_name: user-postgres
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "root"
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "5433:5432"
+    volumes:
+      - D:/Project2/upi-wallet-system/user-service/user-service/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d user_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
