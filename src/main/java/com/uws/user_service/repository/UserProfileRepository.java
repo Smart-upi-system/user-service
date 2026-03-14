@@ -11,4 +11,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfile,String>
 
     @Query("SELECT u FROM UserProfile where u.upiID= :upiId ")
     UserProfile findByUpiId(@Param("upiId") String upiId);
+
+    @Query("SELECT u FROM UserProfile where u.userId= :userId ")
+    UserProfile findByUserId(@Param("userId") String userId);
 }
