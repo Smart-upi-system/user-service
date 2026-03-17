@@ -24,7 +24,7 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
 
-    private ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
 
     @Override
     @Cacheable(value = "userProfile", key = "#userId")
