@@ -47,7 +47,7 @@ public class UserController {
     @GetMapping("/validation/{upiId}")
     public ResponseEntity<ValidationResponse> validation(@PathVariable String upiId){
         log.info("GET /users/validate/{} - validating UPI ID", upiId);
-        ValidationResponse validationResponse=userProfileService.validateId(upiId);
+        ValidationResponse validationResponse=userProfileService.validateUpiId(upiId);
 
         return ResponseEntity.ok(validationResponse);
     }
