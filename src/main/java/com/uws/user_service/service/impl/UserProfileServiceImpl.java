@@ -49,11 +49,28 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
+    @Cacheable(value="userByUpi", key="#upiId")
+    public UserProfileResponse getUserByUpiId(String upiId) {
+        log.info("Getting user by UPI ID: {}", upiId);
+        UserProfile userProfile = userProfileRepository.findByUpiId(upiId);
+
+        if(ObjectUtils.isEmpty(userProfile)) {
+            throw new RuntimeException("User not found with UPI ID: "+upiId);
+        }
+
+        return modelMapper.map(userProfile, UserProfileResponse.class);
+    }
+
+    @Override
     @Transactional
     @CacheEvict(value = "userProfile", key = "#userId" )
     public UserProfileResponse updateUserProfile(String userId, UpdateProfileRequest profileRequest) {
         log.info("Updating profile for userId: {}", userId);
         UserProfile userProfile=userProfileRepository.findByUserId(userId);
+
+        if (userProfile == null) {
+            throw new RuntimeException("User not found with userId: " + userId);
+        }
 
         if(profileRequest.getFirstName()!=null){
             userProfile.setFirstName(profileRequest.getFirstName());
@@ -92,6 +109,9 @@ public class UserProfileServiceImpl implements UserProfileService {
         log.info("Updating kyc status for userId: {}", userId);
         UserProfile userProfile=userProfileRepository.findByUserId(userId);
 
+        if (userProfile == null) {
+            throw new RuntimeException("User not found with userId: " + userId);
+        }
 
         userProfile.setKycStatus(kycRequest.getKycStatus());
 
@@ -105,8 +125,31 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
+    @Cacheable(value = "userValidation", key = "#userId")
+    public ValidationResponse validateUser(String userId) {
+        log.info("Validating User ID: {}", userId);
+        UserProfile userProfile = userProfileRepository.findByUserId(userId);
+
+        if (userProfile == null) {
+            return ValidationResponse.builder()
+                    .exists(false)
+                    .active(false)
+                    .kycVerified(false)
+                    .message("User ID not found")
+                    .build();
+        }
+
+        return ValidationResponse.builder()
+                .exists(true)
+                .active(userProfile.getActive())
+                .kycVerified("VERIFIED".equals(userProfile.getKycStatus()))
+                .message("User ID is valid")
+                .build();
+    }
+
+    @Override
     @Cacheable(value = "upiValidation", key = "#upiId")
-    public ValidationResponse validateId(String upiId) {
+    public ValidationResponse validateUpiId(String upiId) {
         log.info("Validating UPI ID: {}", upiId);
         UserProfile userProfile=userProfileRepository.findByUpiId(upiId);
 

@@ -13,9 +13,9 @@ public interface UserProfileService {
 
    UserProfileResponse updateKycStatus(String userId, UpdateKycRequest kycRequest);
 
-   ValidationResponse validateId(String upiId);
+   ValidationResponse validateUpiId(String upiId);
 
+   UserProfileResponse getUserByUpiId(String upiId);
 
-
-
+   ValidationResponse validateUser(String userId);
 }

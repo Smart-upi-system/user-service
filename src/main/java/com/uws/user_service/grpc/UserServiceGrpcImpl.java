@@ -2,7 +2,8 @@ package com.uws.user_service.grpc;
 
 import com.uws.user.grpc.proto.*;
 import com.uws.user_service.model.UserProfile;
-import com.uws.user_service.repository.UserProfileRepository;
+import com.uws.user_service.service.UserProfileService;
+import com.uws.user_service.dto.UserProfileResponse;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,17 +15,19 @@ import org.springframework.util.ObjectUtils;
 @RequiredArgsConstructor
 public class UserServiceGrpcImpl extends UserServiceGrpc.UserServiceImplBase {
 
-    private final UserProfileRepository userProfileRepository;
+    private final UserProfileService userProfileService;
 
     @Override
     public void getUserByUpiId(GetUserByUpiIdRequest request, StreamObserver<UserResponse> streamObserver){
         log.info("gRPC: GetUserByUpiId called for upiId: {}", request.getUpiId());
 
         try{
-            UserProfile userProfile=userProfileRepository.findByUpiId(request.getUpiId());
+            UserProfileResponse userProfile = userProfileService.getUserByUpiId(request.getUpiId());
+
             if(ObjectUtils.isEmpty(userProfile)){
                 throw  new RuntimeException("user not found");
             }
+
             UserResponse userResponse= UserResponse.newBuilder()
                     .setUserId(userProfile.getUserId())
                     .setUpiId(userProfile.getUpiID())
@@ -58,20 +61,17 @@ public class UserServiceGrpcImpl extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void validateUser(ValidateUserRequest request, StreamObserver<ValidationResponse> streamObserver){
         log.info("gRPC: ValidateUserRequest called for userId: {}", request.getUserId());
+
         try {
-        UserProfile userProfile=userProfileRepository.findByUserId(request.getUserId());
+            com.uws.user_service.dto.ValidationResponse validation = userProfileService.validateUser(request.getUserId());
             ValidationResponse response= ValidationResponse.newBuilder()
-                    .setValid(true)
-                    .setActive(userProfile.getActive())
-                    .setKycVerified("VERIFIED".equals(userProfile.getKycStatus()))
-                    .setMessage("User is valid")
+                    .setValid(validation.isExists())
+                    .setActive(validation.isActive())
+                    .setKycVerified(validation.isKycVerified())
+                    .setMessage(validation.getMessage())
                     .build();
             streamObserver.onNext(response);
             streamObserver.onCompleted();
-
-            log.info("gRPC: User validated - userId: {}, active: {}, kycVerified: {}",
-                    userProfile.getUserId(), userProfile.getActive(),
-                    "VERIFIED".equals(userProfile.getKycStatus()));
 
         } catch (RuntimeException e) {
             log.error("gRPC: Error retrieving user by UPI ID: {}", request.getUserId(), e);
@@ -88,14 +88,15 @@ public class UserServiceGrpcImpl extends UserServiceGrpc.UserServiceImplBase {
     }
 
     @Override
-    public void getUserProfile(GetUserProfileRequest request,StreamObserver<UserProfileResponse> streamObserver){
+    public void getUserProfile(GetUserProfileRequest request,StreamObserver<com.uws.user.grpc.proto.UserProfileResponse> streamObserver){
         log.info("gRPC: GetUserProfileRequest called for userId: {}", request.getUserId());
+
         try {
-            UserProfile userProfile=userProfileRepository.findByUserId(request.getUserId());
+            UserProfileResponse userProfile = userProfileService.getUserProfile(request.getUserId());
             if(ObjectUtils.isEmpty(userProfile)){
                 throw  new RuntimeException("user not found");
             }
-            UserProfileResponse userProfileResponse= UserProfileResponse.newBuilder()
+            com.uws.user.grpc.proto.UserProfileResponse userProfileResponse= com.uws.user.grpc.proto.UserProfileResponse.newBuilder()
                     .setUserId(userProfile.getUserId())
                     .setUpiId(userProfile.getUpiID())
                     .setActive(userProfile.getActive())
@@ -120,7 +121,7 @@ public class UserServiceGrpcImpl extends UserServiceGrpc.UserServiceImplBase {
         } catch (Exception e) {
             log.error("gRPC: Error retrieving user profile: {}", request.getUserId(), e);
 
-            UserProfileResponse errorResponse = UserProfileResponse.newBuilder()
+            com.uws.user.grpc.proto.UserProfileResponse errorResponse = com.uws.user.grpc.proto.UserProfileResponse.newBuilder()
                     .setSuccess(false)
                     .setMessage("Profile not found")
                     .build();

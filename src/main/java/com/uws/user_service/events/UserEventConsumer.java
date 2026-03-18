@@ -46,7 +46,7 @@ public class UserEventConsumer {
                     .firstName(firstName)
                     .lastName(lastName)
                     .upiID(upiId)
-                    .kycStatus("PENDIND")
+                    .kycStatus("PENDING")
                     .active(true)
                     .build();
 
