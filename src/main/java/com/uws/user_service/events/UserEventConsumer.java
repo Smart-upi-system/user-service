@@ -1,9 +1,11 @@
 package com.uws.user_service.events;
 
+import com.uws.user_service.grpc.WalletServiceGrpcClient;
 import com.uws.user_service.model.UserProfile;
 import com.uws.user_service.repository.UserProfileRepository;
 import com.uws.user_service.util.UpiIdGenerator;
-import jakarta.transaction.Transactional;
+import com.uws.wallet.grpc.proto.WalletResponse;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -16,6 +18,7 @@ public class UserEventConsumer {
 
     private final UserProfileRepository userProfileRepository;
     private final UpiIdGenerator upiIdGenerator;
+    private final WalletServiceGrpcClient walletGrpcClient;
 
     @KafkaListener(
             topics = "${kafka.topics.user-events}",
@@ -53,6 +56,15 @@ public class UserEventConsumer {
             userProfileRepository.save(profile);
             log.info("UserProfile created successfully: userId={}, upiId={}",
                     userCreatedEvent.getUserId(), upiId);
+
+            // Call Wallet Service to create the wallet
+            WalletResponse response = walletGrpcClient.createWallet(userCreatedEvent.getUserId());
+            if (response.getSuccess()) {
+                log.info("Wallet created for user {}. ID: {}", userCreatedEvent.getUserId(), response.getWalletId());
+            } else {
+                // Throwing exception forces Transactional rollback of UserProfile
+                throw new RuntimeException("Wallet Service Error: " + response.getMessage());
+            }
 
         } catch (Exception e) {
             log.error("Failed to process UserCreatedEvent: eventId={}, userId={}",
