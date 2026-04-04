@@ -43,6 +43,7 @@ public class UserEventConsumer {
 
             String upiId=upiIdGenerator.generateUpiId(userCreatedEvent.getData().getUsername());
 
+            WalletResponse response = walletGrpcClient.createWallet(userCreatedEvent.getUserId());
             UserProfile profile=UserProfile.builder()
                     .userId(userCreatedEvent.getUserId())
                     .id(userCreatedEvent.getUserId())
@@ -51,6 +52,7 @@ public class UserEventConsumer {
                     .upiID(upiId)
                     .kycStatus("PENDING")
                     .active(true)
+                    .walletId(response.getWalletId())
                     .build();
 
             userProfileRepository.save(profile);
@@ -58,7 +60,6 @@ public class UserEventConsumer {
                     userCreatedEvent.getUserId(), upiId);
 
             // Call Wallet Service to create the wallet
-            WalletResponse response = walletGrpcClient.createWallet(userCreatedEvent.getUserId());
             if (response.getSuccess()) {
                 log.info("Wallet created for user {}. ID: {}", userCreatedEvent.getUserId(), response.getWalletId());
             } else {
