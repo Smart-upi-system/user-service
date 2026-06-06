@@ -58,4 +58,13 @@ public class UserController {
     }
 
 
+//    @GetMapping("/qr-code")
+//    public ResponseEntity<String> getQrCode(@RequestHeader("X-User-Id") String userId) {
+//        log.info("GET /users/qr-code - userId: {}", userId);
+//        String qrCodeUrl = userProfileService.getUserQrCode(userId);
+//        return ResponseEntity.ok(qrCodeUrl);
+//    }
+
+
+
 }
