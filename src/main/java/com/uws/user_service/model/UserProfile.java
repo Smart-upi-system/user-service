@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Table(name = "user_profiles", indexes = {
-        @Index(name = "idx_upi_id", columnList = "upiId", unique = true),
+        @Index(name = "idx_upi_id", columnList = "upiID"),
         @Index(name = "idx_user_id", columnList = "userId"),
         @Index(name = "idx_kyc_status", columnList = "kycStatus")
 })
@@ -36,6 +36,9 @@ public class UserProfile {
 
     @Column(nullable = false, unique = true, length = 100)
     private String upiID;
+
+    @Column(name="qr_code", length = 500)
+    private String  qrCode;
 
     @Column(length = 15)
     private String phone;

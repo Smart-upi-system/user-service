@@ -4,12 +4,18 @@ import com.uws.user_service.dto.UpdateKycRequest;
 import com.uws.user_service.dto.UpdateProfileRequest;
 import com.uws.user_service.dto.UserProfileResponse;
 import com.uws.user_service.dto.ValidationResponse;
+import com.uws.user_service.service.QrCodeService;
 import com.uws.user_service.service.UserProfileService;
+import com.uws.user_service.service.impl.QrCodeServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserProfileService userProfileService;
+    private final QrCodeService qrCodeService;
 
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getProfile(@RequestHeader("X-User-Id")  String userId){
@@ -58,12 +65,22 @@ public class UserController {
     }
 
 
-//    @GetMapping("/qr-code")
-//    public ResponseEntity<String> getQrCode(@RequestHeader("X-User-Id") String userId) {
-//        log.info("GET /users/qr-code - userId: {}", userId);
-//        String qrCodeUrl = userProfileService.getUserQrCode(userId);
-//        return ResponseEntity.ok(qrCodeUrl);
-//    }
+    /**
+     * GET /api/v1/users/{userId}/qr
+     *
+     * Authenticated: the JWT subject must match the requested userId.
+     * Returns a PNG image with a 24h browser cache header (safe since QR is static).
+     */
+    @GetMapping(value  = "/qr-code", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> getQrCod(@RequestHeader("X-User-Id")  String userId){
+        byte[] qrImage=qrCodeService.getOrGenerateQrCode(userId);
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(24, TimeUnit.HOURS).cachePrivate())
+                .contentType(MediaType.IMAGE_PNG)
+                .body(qrImage);
+
+    }
 
 
 

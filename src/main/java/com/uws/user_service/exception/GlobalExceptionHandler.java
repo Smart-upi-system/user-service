@@ -66,6 +66,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
+    @ExceptionHandler(QRCodeException.class)
+    public ResponseEntity<Map<String, String>> handleQrCodeException(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        log.error("QrCodeException: {}", errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
 }
 
 @Builder
