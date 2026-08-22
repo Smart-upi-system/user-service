@@ -1,8 +1,6 @@
 package com.uws.user_service.grpc;
 
-import com.uws.wallet.grpc.proto.WalletServiceGrpc;
-import com.uws.wallet.grpc.proto.CreateWalletRequest;
-import com.uws.wallet.grpc.proto.WalletResponse;
+import com.uws.wallet.grpc.proto.*;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,5 +18,12 @@ public class WalletServiceGrpcClient {
                 .setUserId(userId)
                 .build();
         return walletStub.createWallet(request);
+    }
+
+    public BalanceResponse getBalance(String walletId){
+        GetBalanceRequest request= GetBalanceRequest.newBuilder()
+                .setWalletId(walletId)
+                .build();
+        return walletStub.getBalance(request);
     }
 }
